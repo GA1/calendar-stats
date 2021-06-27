@@ -42,7 +42,7 @@ fs.readFile('credentials.json', (err, content) => {
 function authorize(credentials, callback) {
   const {client_secret, client_id, redirect_uris} = credentials.installed;
   const oAuth2Client = new google.auth.OAuth2(
-      client_id, client_secret, redirect_uris[0]);
+    client_id, client_secret, redirect_uris[0]);
 
   // Check if we have previously stored a token.
   fs.readFile(TOKEN_PATH, (err, token) => {
@@ -95,8 +95,7 @@ function durationInMinutes(startDateTime, endDateTime) {
   return result
 }
 
-// const eventsToTrack = ["🎹 piano practice", "🇮🇳 Learn Hindi", "🎥 Working on Youtube"]
-const eventsToTrack = ["🇮🇳 Learn Hindi"]
+const eventsToTrack = ["piano practice", "Learn Hindi", "Working on Youtube"]
 const counters = new Map()
 eventsToTrack.forEach(e => counters.set(e, 0))
 
@@ -114,20 +113,15 @@ function listEvents(auth) {
     let hindiCounter = 0
     if (events.length) {
       events.map((e, i) => {
-        // console.log(JSON.stringify(res.data.items[i]))
-        // console.log(JSON.stringify(res.data.items[i].summary))
-        if (eventsToTrack.includes(e.summary)) {
+        const eventToTrack = eventsToTrack.find(eventToTrack => e.summary.includes(eventToTrack))
+        if (eventToTrack) {
           const eDuration = durationInMinutes(e.start.dateTime, e.end.dateTime)
-          console.log(e.end.dateTime, e.start.dateTime)
-          console.log(eDuration)
-          console.log(e.summary)
-          console.log('--------------')
-          counters.set(e.summary, counters.get(e.summary) + eDuration)
+          counters.set(eventToTrack, counters.get(eventToTrack) + eDuration)
           hindiCounter++
         }
       });
     } else {
-      console.log('No upcoming events found.');
+      console.log('No events found.');
     }
     console.log('⏳ Time spent per activity (in hours)')
     console.log('Hindi Counter: ' + hindiCounter)
@@ -136,9 +130,7 @@ function listEvents(auth) {
     })
   });
 }
-// [END calendar_quickstart]
 
 module.exports = {
   SCOPES,
-  listEvents,
 };
