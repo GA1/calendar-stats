@@ -83,33 +83,57 @@ function getAccessToken(oAuth2Client, callback) {
   });
 }
 
-/**
- * Lists the next 10 events on the user's primary calendar.
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
+function oneYearAgo() {
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+  return oneYearAgo
+}
+
+function durationInMinutes(startDateTime, endDateTime) {
+  const diffMs = (new Date(endDateTime) - new Date(startDateTime));
+  const result = Math.round(((diffMs % 86400000) % 3600000) / 60000);
+  return result
+}
+
+// const eventsToTrack = ["🎹 piano practice", "🇮🇳 Learn Hindi", "🎥 Working on Youtube"]
+const eventsToTrack = ["🇮🇳 Learn Hindi"]
+const counters = new Map()
+eventsToTrack.forEach(e => counters.set(e, 0))
+
 function listEvents(auth) {
   const calendar = google.calendar({version: 'v3', auth});
   calendar.events.list({
     calendarId: 'primary',
-    timeMin: (new Date()).toISOString(),
-    maxResults: 20,
+    timeMin: oneYearAgo(),
+    maxResults: 2000,
     singleEvents: true,
     orderBy: 'startTime',
   }, (err, res) => {
     if (err) return console.log('The API returned an error: ' + err);
-    console.log(JSON.stringify(res.data.items[0]))
     const events = res.data.items;
+    let hindiCounter = 0
     if (events.length) {
-      console.log('Upcoming 10 events:');
-      events.map((event, i) => {
-        const start = event.start.dateTime || event.start.date;
-        console.log(JSON.stringify(res.data.items[i]))
-        // console.log(res.data.items[i])
-        // console.log(`${start} - ${event.summary}`);
+      events.map((e, i) => {
+        // console.log(JSON.stringify(res.data.items[i]))
+        // console.log(JSON.stringify(res.data.items[i].summary))
+        if (eventsToTrack.includes(e.summary)) {
+          const eDuration = durationInMinutes(e.start.dateTime, e.end.dateTime)
+          console.log(e.end.dateTime, e.start.dateTime)
+          console.log(eDuration)
+          console.log(e.summary)
+          console.log('--------------')
+          counters.set(e.summary, counters.get(e.summary) + eDuration)
+          hindiCounter++
+        }
       });
     } else {
       console.log('No upcoming events found.');
     }
+    console.log('⏳ Time spent per activity (in hours)')
+    console.log('Hindi Counter: ' + hindiCounter)
+    eventsToTrack.forEach(e => {
+      console.log(`${e}: ${counters.get(e) / 60}`)
+    })
   });
 }
 // [END calendar_quickstart]
